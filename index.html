@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Confetti & Sound Test</title>
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+          integrity="sha512-QUL8UHkGBg6SA9Bc1NzQ6kUY21uhE+7DDJz/CacB2PGAb/+O3LuKAY3P5dWgjUemB4RCKbC4AV0LyOM63e4g2A=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        body {
+            text-align: center;
+            margin-top: 50px;
+            font-family: sans-serif;
+        }
+        button {
+            font-size: 1.5rem;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Confetti & Sound Test</h1>
+    <button id="happy-button"><i class="fas fa-smile"></i> Happy Button</button>
+    <button id="sad-button"><i class="fas fa-frown"></i> Sad Button</button>
+
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+    <script>
+        // Basic utility for a short beep-like sound
+        // Slight modifications to waveform and envelope to give character
+        function playNote(audioCtx, frequency, startTime, duration=0.3, waveform='triangle', pitchBend=true) {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = waveform;
+            oscillator.frequency.setValueAtTime(frequency, startTime);
+
+            oscillator.connect(gainNode).connect(audioCtx.destination);
+
+            // Envelope: quick attack, short sustain, quick release
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.05);
+            gainNode.gain.setValueAtTime(0.4, startTime + duration - 0.05);
+            gainNode.gain.linearRampToValueAtTime(0.0, startTime + duration);
+
+            // Slight pitch bend at start if desired
+            if (pitchBend) {
+                oscillator.frequency.setValueAtTime(frequency, startTime);
+                oscillator.frequency.linearRampToValueAtTime(frequency + 20, startTime + 0.05);
+                oscillator.frequency.linearRampToValueAtTime(frequency, startTime + 0.1);
+            }
+
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration);
+        }
+
+        function playHappySound() {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            // A quick ascending run: G3 (196 Hz), C4 (262 Hz), E4 (330 Hz)
+            // Happy, playful
+            const startTime = audioCtx.currentTime;
+            playNote(audioCtx, 196, startTime, 0.3, 'triangle', true);
+            playNote(audioCtx, 262, startTime + 0.3, 0.3, 'triangle', true);
+            playNote(audioCtx, 330, startTime + 0.6, 0.3, 'triangle', true);
+        }
+
+        function playSadSound() {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            // A sad descending "wah-wah":
+            // A2 (~110 Hz) short, then F2 (~87 Hz) longer
+            const startTime = audioCtx.currentTime;
+            playNote(audioCtx, 110, startTime, 0.4, 'sawtooth', true);
+            playNote(audioCtx, 87, startTime + 0.4, 1.0, 'sawtooth', true);
+        }
+
+        function playFunnyThankfulSound() {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            // Similar to the happy sound but maybe a different pattern to feel thankful and funny:
+            // An ascending arpeggio: C3 (130 Hz), D3 (146 Hz), G3(196 Hz)
+            // All quick and slightly pitch bent for humor.
+            const startTime = audioCtx.currentTime;
+            playNote(audioCtx, 130, startTime, 0.3, 'triangle', true);
+            playNote(audioCtx, 146, startTime + 0.3, 0.3, 'triangle', true);
+            playNote(audioCtx, 196, startTime + 0.6, 0.3, 'triangle', true);
+        }
+
+        function launchConfetti() {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+
+        // Event listeners
+        document.getElementById('happy-button').addEventListener('click', () => {
+            launchConfetti();
+            playHappySound();
+        });
+
+        document.getElementById('sad-button').addEventListener('click', () => {
+            // No confetti for sad
+            playSadSound();
+        });
+
+        document.getElementById('funny-button').addEventListener('click', () => {
+            launchConfetti();
+            playFunnyThankfulSound();
+        });
+    </script>
+
+</body>
+</html>
